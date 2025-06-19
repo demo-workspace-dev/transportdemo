@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Transport Registration</title>
+  <link rel="icon" href="delivery-truck.png">
   <style>
     * {
       box-sizing: border-box;
@@ -41,6 +42,18 @@
       margin-bottom: 6px;
       color: #333;
       font-weight: 500;
+    }
+
+    label.required::after {
+      content: " *";
+      color: red;
+    }
+
+    .error-message {
+      color: red;
+      font-size: 0.85rem;
+      margin-top: 4px;
+      display: none;
     }
 
     input,
@@ -113,7 +126,6 @@
       height: 100%;
       backdrop-filter: blur(4px);
       -webkit-backdrop-filter: blur(4px);
-      /* Chrome needs this */
       background-color: rgba(255, 255, 255, 0.7);
       z-index: 9999;
       display: none;
@@ -144,32 +156,37 @@
 
 <body>
   <div class="container">
-    <h2>Transport Authority Registration</h2>
-    <form id="transportForm">
+    <h2>Transport Authority Registration</h2><br>
+    <form id="transportForm" novalidate>
       <div class="form-row">
         <div class="form-group">
-          <label for="firstName">First Name *</label>
-          <input type="text" id="firstName" required />
+          <label for="firstName" class="required">First Name</label>
+          <input type="text" id="firstName" />
+          <div class="error-message" id="firstNameError"></div>
         </div>
         <div class="form-group">
-          <label for="lastName">Last Name *</label>
-          <input type="text" id="lastName" required />
+          <label for="lastName" class="required">Last Name</label>
+          <input type="text" id="lastName" />
+          <div class="error-message" id="lastNameError"></div>
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label for="email">Email *</label>
-          <input type="email" id="email" required />
+          <label for="email" class="required">Email</label>
+          <input type="email" id="email" />
+          <div class="error-message" id="emailError"></div>
         </div>
         <div class="form-group">
-          <label for="phone">Phone *</label>
-          <input type="tel" id="phone" pattern="^\d{10}$" required placeholder="10 digits" />
+          <label for="phone" class="required">Phone</label>
+          <input type="tel" id="phone" placeholder="10 digits" />
+          <div class="error-message" id="phoneError"></div>
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label for="dob">Date of Birth *</label>
-          <input type="date" id="dob" required />
+          <label for="dob" class="required">Date of Birth</label>
+          <input type="date" id="dob" />
+          <div class="error-message" id="dobError"></div>
         </div>
         <div class="form-group">
           <label for="licenseNumber">License No.</label>
@@ -177,13 +194,15 @@
         </div>
       </div>
       <div class="form-group">
-        <label for="address">Street Address *</label>
-        <input type="text" id="address" required />
+        <label for="address" class="required">Street Address</label>
+        <input type="text" id="address" />
+        <div class="error-message" id="addressError"></div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label for="city">City *</label>
-          <input type="text" id="city" required />
+          <label for="city" class="required">City</label>
+          <input type="text" id="city" />
+          <div class="error-message" id="cityError"></div>
         </div>
         <div class="form-group">
           <label for="state">State</label>
@@ -246,6 +265,21 @@
   </div>
 
   <script>
+    function showError(id, message) {
+      const el = document.getElementById(id + "Error");
+      if (el) {
+        el.textContent = message;
+        el.style.display = "block";
+      }
+    }
+
+    function clearErrors() {
+      document.querySelectorAll(".error-message").forEach(el => {
+        el.textContent = "";
+        el.style.display = "none";
+      });
+    }
+
     function generateFallbackId() {
       const ts = Date.now().toString().slice(-6);
       const rnd = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
@@ -254,32 +288,64 @@
 
     document.getElementById('transportForm').addEventListener('submit', async function (e) {
       e.preventDefault();
+      clearErrors();
 
       const overlay = document.getElementById('loadingOverlay');
-      overlay.style.display = 'flex'; // Show loading overlay
+      overlay.style.display = 'flex';
 
+      let hasError = false;
+
+      const firstName = document.getElementById('firstName').value.trim();
+      const lastName = document.getElementById('lastName').value.trim();
       const email = document.getElementById('email').value.trim();
       const phone = document.getElementById('phone').value.trim();
+      const dob = document.getElementById('dob').value;
+      const address = document.getElementById('address').value.trim();
+      const city = document.getElementById('city').value.trim();
+
+      if (!firstName) {
+        showError("firstName", "First name is required.");
+        hasError = true;
+      }
+      if (!lastName) {
+        showError("lastName", "Last name is required.");
+        hasError = true;
+      }
       if (!email.includes('@')) {
-        alert('Please enter a valid email.');
-        overlay.style.display = 'none';
-        return;
+        showError("email", "Enter a valid email address.");
+        hasError = true;
       }
       if (!/^\d{10}$/.test(phone)) {
-        alert('Phone number must be 10 digits.');
+        showError("phone", "Phone number must be 10 digits.");
+        hasError = true;
+      }
+      if (!dob) {
+        showError("dob", "Date of birth is required.");
+        hasError = true;
+      }
+      if (!address) {
+        showError("address", "Street address is required.");
+        hasError = true;
+      }
+      if (!city) {
+        showError("city", "City is required.");
+        hasError = true;
+      }
+
+      if (hasError) {
         overlay.style.display = 'none';
         return;
       }
 
       const formData = {
-        firstName: document.getElementById('firstName').value.trim(),
-        lastName: document.getElementById('lastName').value.trim(),
-        email: email,
-        phone: phone,
-        dob: document.getElementById('dob').value,
+        firstName,
+        lastName,
+        email,
+        phone,
+        dob,
         licenseNumber: document.getElementById('licenseNumber').value.trim() || undefined,
-        address: document.getElementById('address').value.trim(),
-        city: document.getElementById('city').value.trim(),
+        address,
+        city,
         state: document.getElementById('state').value || undefined,
         vehicle: document.getElementById('vehicle').value || undefined,
         experience: (() => {
@@ -315,7 +381,6 @@
         }
 
         const data = await response.json();
-
         document.getElementById('userId').textContent = data.userId || generateFallbackId();
         document.getElementById('successMessage').style.display = 'block';
         this.style.display = 'none';
@@ -324,7 +389,7 @@
         alert('Failed to submit registration. Please try again later.');
         console.error(error);
       } finally {
-        overlay.style.display = 'none'; // Hide loading overlay
+        overlay.style.display = 'none';
       }
     });
   </script>
